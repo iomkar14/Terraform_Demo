@@ -52,7 +52,7 @@ vpc      = true
 resource "aws_nat_gateway" "demo_nat"{
   allocation_id = "${aws_eip.demo_eip.id}"
   subnet_id = "${aws_subnet.demo_public.id}"
-  depends_on = ["aws_internet_gateway.demo_igw"]
+  depends_on = [aws_internet_gateway.demo_igw]
 }
 
 #------Route tables------------------
