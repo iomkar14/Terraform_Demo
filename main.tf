@@ -92,8 +92,8 @@ resource "aws_route_table_association" "demo_private_association" {
 }
 
 #------Security-Groups------------------------
-resource "aws_security_group" "demo_sg" {
-  name        = "demo_sg"
+resource "aws_security_group" "demo_public_sg" {
+  name        = "demo_public_sg"
   description = "Used for access to dev instance jenkins host"
   vpc_id      = "${aws_vpc.demo_vpc.id}"
 
@@ -112,27 +112,6 @@ resource "aws_security_group" "demo_sg" {
     cidr_blocks = ["${var.localip}"]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = -1
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-#public-security-group
-resource "aws_security_group" "demo_public_sg" {
-  name        = "demo_public_sg"
-  description = "Used for public access"
-  vpc_id      = "${aws_vpc.demo_vpc.id}"
-
-  #http
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
   egress {
     from_port   = 0
     to_port     = 0
@@ -168,8 +147,8 @@ resource "aws_key_pair" "demo_auth" {
   public_key = "${file(var.public_key_path)}"
 }
 
-#dev-server
-resource "aws_instance" "demo_jenkins" {
+#Jenkins_instance
+resource "aws_instance" "demo_jenkins_ansible" {
   instance_type = "${var.dev_instance_type}"
   ami           = "${var.dev_ami}"
   tags = {
@@ -178,5 +157,18 @@ resource "aws_instance" "demo_jenkins" {
   key_name               = "${aws_key_pair.demo_auth.id}"
   vpc_security_group_ids = ["${aws_security_group.demo_public_sg.id}"]
   subnet_id              = "${aws_subnet.demo_public.id}"
-  user_data              = "${file("userdata")}"
+  user_data              = "${file("jenkins_userdata")}"
+}
+
+#Deployment_instance
+resource "aws_instance" "demo_deployment" {
+  instance_type = "${var.dev_instance_type}"
+  ami           = "${var.dev_ami}"
+  tags = {
+    Name = "demo_deployment"
+  }
+  key_name               = "${aws_key_pair.demo_auth.id}"
+  vpc_security_group_ids = ["${aws_security_group.demo_private_sg.id}"]
+  subnet_id              = "${aws_subnet.demo_private.id}"
+  user_data              = "${file("docker_userdata")}"
 }
